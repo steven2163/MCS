@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import Adafruit_DHT
 import RPi.GPIO as GPIO
 import time
 import http.client as http
@@ -7,6 +8,7 @@ import json
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(4, GPIO.IN)
+GPIO.setup(17, GPIO.IN)
 
 deviceId = "D6EKC3mV"
 deviceKey = "TD7epCSxLAoo7MIN" 
@@ -30,11 +32,16 @@ def post_to_mcs(payload):
         conn.close() 
 try:
     while True:
-        SwitchStatus = GPIO.input(4)
-        if GPIO.input(4)==1:  #按下去就亮
-            print("Button pressed")
-       # else:                 #其他時候不亮
-        payload = {"datapoints":[{"dataChnId":"SwitchStatus","values":{"value":SwitchStatus}}]} 
+        h0, t0= Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, 4)
+        SwitchStatus = GPIO.input(17)
+        if SwitchStatus == 1:
+            print("Button Pressed")
+            time.sleep(3)
+        else:
+            print("Button not Pressed")
+            time.sleep(3)
+        print('Temp={0:0.1f}*  Humidity={1:0.1f}%'.format(t0, h0))
+        payload = {"datapoints":[{"dataChnId":"Humidity","values":{"value":h0}},{"dataChnId":"Temperature","values":{"value":t0}},{"dataChnId":"SwitchStatus","values":{"value":SwitchStatus}}]}	
         post_to_mcs(payload)
         time.sleep(1)
 except KeyboardInterrupt:
